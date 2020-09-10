@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# Usage: if one stores multiple TFRecord files in ./input/train,
+# Usage: if one stores multiple TFRecord files in ./tfrecords-jpeg-224x224/train,
 # execute the following command to convert files all at once.
-# $ time find input/train -type f -name '*.tfrec' -exec ./tfrecord2imagefolder.py -i {} +
+# $ time find tfrecords-jpeg-224x224/train -type f -name '*.tfrec' -exec ./tfrecord2imagefolder.py -i {} +
 
 from PIL import Image
 import argparse
@@ -21,9 +21,13 @@ def process_one_file(infn, outpn):
         # print(dict(example.features.feature).keys())
         # print(dict(example.features.feature)['id'], dict(example.features.feature)['class'])
         
-        class_name = str(dict(example.features.feature)['class'].int64_list.value[0])
-        # PyTorch's ImageFolder takes the class as the folder name, so create it.
-        outpn2 = os.path.join(outpn, class_name)
+        # For validation data, class field does not exists.
+        if 'class' in dict(example.features.feature).keys():
+            class_name = str(dict(example.features.feature)['class'].int64_list.value[0])
+            # PyTorch's ImageFolder takes the class as the folder name, so create it.
+            outpn2 = os.path.join(outpn, class_name)
+        else:
+            outpn2 = outpn
         if not os.path.exists(outpn2):
             os.makedirs(outpn2)
         
@@ -46,7 +50,7 @@ if __name__ == '__main__':
 
     # create output folder
     outpn = 'train'
-    outpn_from_user = input('Where do you want to output files? [./train]')
+    outpn_from_user = input('Where do you want to output files? [./train] ')
     if not outpn_from_user == '':
         outpn = outpn_from_user
     if not os.path.exists(outpn):
